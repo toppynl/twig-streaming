@@ -1,0 +1,43 @@
+{
+    "name": "toppy/twig-streaming",
+    "description": "Streaming template rendering with deferred slots and Early Hints for Twig",
+    "type": "library",
+    "license": "proprietary",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        {"type": "path", "url": "../async-view-model", "options": {"symlink": true}}
+    ],
+    "autoload": {
+        "psr-4": {
+            "Toppy\\TwigStreaming\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Toppy\\TwigStreaming\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=8.4",
+        "toppy/async-view-model": "*@dev",
+        "twig/twig": "^3.0",
+        "amphp/amp": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.5",
+        "symfony/asset": "^8.0",
+        "symfony/dependency-injection": "^8.0",
+        "symfony/http-kernel": "^8.0"
+    },
+    "suggest": {
+        "symfony/dependency-injection": "Required for ToppyTwigStreamingBundle"
+    },
+    "extra": {
+        "symfony": {
+            "bundles": {
+                "Toppy\\TwigStreaming\\Bundle\\ToppyTwigStreamingBundle": ["all"]
+            }
+        }
+    }
+}
