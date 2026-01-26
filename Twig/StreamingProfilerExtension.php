@@ -14,6 +14,7 @@ use Twig\Extension\AbstractExtension;
  */
 final class StreamingProfilerExtension extends AbstractExtension
 {
+    #[\Override]
     public function getNodeVisitors(): array
     {
         return [new StreamingProfilerNodeVisitor()];

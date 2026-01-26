@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/src/Twig/NodeVisitor/StreamingProfilerNodeVisitor.php
 
 declare(strict_types=1);
@@ -18,17 +19,20 @@ use Twig\NodeVisitor\NodeVisitorInterface;
 /**
  * Injects streaming profiler calls around templates and blocks.
  */
+// @mago-ignore analysis:mixed-assignment - Twig Node::getAttribute() returns mixed; vendor limitation
 final class StreamingProfilerNodeVisitor implements NodeVisitorInterface
 {
+    #[\Override]
     public function enterNode(Node $node, Environment $env): Node
     {
         return $node;
     }
 
+    #[\Override]
     public function leaveNode(Node $node, Environment $env): ?Node
     {
         if ($node instanceof ModuleNode) {
-            $templateName = $node->getTemplateName();
+            $templateName = $node->getTemplateName() ?? 'unknown';
 
             $node->setNode('display_start', new Nodes([
                 new StreamingProfileEnterNode('template', $templateName),
@@ -40,7 +44,8 @@ final class StreamingProfilerNodeVisitor implements NodeVisitorInterface
                 $node->getNode('display_end'),
             ]));
         } elseif ($node instanceof BlockNode) {
-            $blockName = $node->getAttribute('name');
+            $blockNameAttr = $node->getAttribute('name');
+            $blockName = is_string($blockNameAttr) ? $blockNameAttr : 'unknown';
             $templateName = $node->getSourceContext()?->getName() ?? 'unknown';
 
             $node->setNode('body', new BodyNode([
@@ -53,6 +58,7 @@ final class StreamingProfilerNodeVisitor implements NodeVisitorInterface
         return $node;
     }
 
+    #[\Override]
     public function getPriority(): int
     {
         return 0;

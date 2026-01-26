@@ -13,7 +13,7 @@ use Twig\Environment;
  * Before rendering, checks if the template has a doPreload() method
  * and calls it to start parallel data fetching.
  */
-final class PreloadingTemplateRenderer
+final readonly class PreloadingTemplateRenderer
 {
     public function __construct(
         private readonly Environment $twig,
@@ -22,6 +22,10 @@ final class PreloadingTemplateRenderer
 
     /**
      * @param array<string, mixed> $context
+     *
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
     public function render(string $templateName, array $context): string
     {
@@ -30,6 +34,7 @@ final class PreloadingTemplateRenderer
 
         // Preload all discovered view models before rendering
         if (method_exists($innerTemplate, 'doPreload')) {
+            /** @var list<class-string<\Toppy\AsyncViewModel\AsyncViewModel<object>>> $viewModelClasses */
             $viewModelClasses = $innerTemplate->doPreload();
             $this->viewModelManager->preloadAll($viewModelClasses);
         }

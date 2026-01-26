@@ -17,6 +17,7 @@ use Twig\TwigFunction;
  */
 final class EarlyHintsExtension extends AbstractExtension
 {
+    #[\Override]
     public function getFunctions(): array
     {
         // Stub implementations for WebLink functions
@@ -30,6 +31,7 @@ final class EarlyHintsExtension extends AbstractExtension
         ];
     }
 
+    #[\Override]
     public function getNodeVisitors(): array
     {
         return [

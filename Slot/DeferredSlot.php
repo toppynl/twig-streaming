@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/src/Slot/DeferredSlot.php
 
 declare(strict_types=1);
@@ -25,7 +26,7 @@ final readonly class DeferredSlot
      */
     public static function generateId(string $template, RequestContext $requestContext): string
     {
-        $hash = substr(md5($template . serialize($requestContext->toArray())), 0, 8);
+        $hash = substr(md5($template . serialize($requestContext->toArray())), offset: 0, length: 8);
         return 'slot_' . $hash;
     }
 }

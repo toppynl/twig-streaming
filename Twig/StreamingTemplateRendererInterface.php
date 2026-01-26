@@ -17,6 +17,10 @@ interface StreamingTemplateRendererInterface
      * @param array<string, mixed> $context Template variables
      * @param int $status HTTP status code
      * @param array<string, string> $headers Additional headers
+     *
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
     public function render(
         string $templateName,
@@ -32,6 +36,10 @@ interface StreamingTemplateRendererInterface
      * @param array<string, mixed> $context Template variables
      * @param int $status HTTP status code
      * @param array<string, string> $headers Additional headers
+     *
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
     public function renderDirect(
         string $templateName,

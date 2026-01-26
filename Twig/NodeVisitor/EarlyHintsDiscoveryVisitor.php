@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Toppy\TwigStreaming\Twig\NodeVisitor;
 
+use Toppy\TwigStreaming\Twig\Node\DoEarlyHintsMethodNode;
 use Twig\Environment;
 use Twig\Node\Expression\ArrayExpression;
 use Twig\Node\Expression\ConstantExpression;
@@ -12,7 +13,6 @@ use Twig\Node\ModuleNode;
 use Twig\Node\Node;
 use Twig\Node\Nodes;
 use Twig\NodeVisitor\NodeVisitorInterface;
-use Toppy\TwigStreaming\Twig\Node\DoEarlyHintsMethodNode;
 
 /**
  * Discovers WebLink function calls in templates at compile-time.
@@ -23,9 +23,11 @@ use Toppy\TwigStreaming\Twig\Node\DoEarlyHintsMethodNode;
  *
  * @see DoEarlyHintsMethodNode
  */
+// @mago-ignore analysis:mixed-assignment - Twig Node::getAttribute() returns mixed; vendor limitation
 final class EarlyHintsDiscoveryVisitor implements NodeVisitorInterface
 {
-    private const FUNCTION_REL_MAP = [
+    /** @var array<string, string> */
+    private const array FUNCTION_REL_MAP = [
         'preload' => 'preload',
         'preconnect' => 'preconnect',
         'dns_prefetch' => 'dns-prefetch',
@@ -35,6 +37,7 @@ final class EarlyHintsDiscoveryVisitor implements NodeVisitorInterface
     /** @var list<array{rel: string, href: ?string, assetPath: ?string, attributes: array<string, mixed>}> */
     private array $discoveredHints = [];
 
+    #[\Override]
     public function enterNode(Node $node, Environment $env): Node
     {
         // Reset state when entering a new template module
@@ -46,7 +49,7 @@ final class EarlyHintsDiscoveryVisitor implements NodeVisitorInterface
         if ($node instanceof FunctionExpression) {
             $functionName = $node->getAttribute('name');
 
-            if (isset(self::FUNCTION_REL_MAP[$functionName])) {
+            if (is_string($functionName) && isset(self::FUNCTION_REL_MAP[$functionName])) {
                 $this->extractHint($node, self::FUNCTION_REL_MAP[$functionName]);
             }
         }
@@ -54,6 +57,7 @@ final class EarlyHintsDiscoveryVisitor implements NodeVisitorInterface
         return $node;
     }
 
+    #[\Override]
     public function leaveNode(Node $node, Environment $env): ?Node
     {
         // Inject doEarlyHints() method when leaving ModuleNode
@@ -67,6 +71,7 @@ final class EarlyHintsDiscoveryVisitor implements NodeVisitorInterface
         return $node;
     }
 
+    #[\Override]
     public function getPriority(): int
     {
         return 0;
@@ -93,9 +98,10 @@ final class EarlyHintsDiscoveryVisitor implements NodeVisitorInterface
 
         if ($uriNode instanceof ConstantExpression) {
             // Direct URL: preload('/app.css') or preconnect('https://...')
+            $href = $uriNode->getAttribute('value');
             $this->discoveredHints[] = [
                 'rel' => $rel,
-                'href' => $uriNode->getAttribute('value'),
+                'href' => is_string($href) ? $href : null,
                 'assetPath' => null,
                 'attributes' => $attributes,
             ];
@@ -105,15 +111,17 @@ final class EarlyHintsDiscoveryVisitor implements NodeVisitorInterface
             if ($assetArgs->hasNode('0')) {
                 $pathNode = $assetArgs->getNode('0');
                 if ($pathNode instanceof ConstantExpression) {
+                    $assetPath = $pathNode->getAttribute('value');
                     $this->discoveredHints[] = [
                         'rel' => $rel,
                         'href' => null,
-                        'assetPath' => $pathNode->getAttribute('value'),
+                        'assetPath' => is_string($assetPath) ? $assetPath : null,
                         'attributes' => $attributes,
                     ];
                 }
             }
         }
+
         // Other dynamic expressions are skipped (can't discover at compile-time)
     }
 
@@ -122,15 +130,20 @@ final class EarlyHintsDiscoveryVisitor implements NodeVisitorInterface
      */
     private function extractArrayAttributes(ArrayExpression $node): array
     {
+        /** @var array<string, mixed> $attributes */
         $attributes = [];
 
+        /** @var array{key: \Twig\Node\Node, value: \Twig\Node\Node} $pair */
         foreach ($node->getKeyValuePairs() as $pair) {
             $keyNode = $pair['key'];
             $valueNode = $pair['value'];
 
             // Only extract constant keys and values
             if ($keyNode instanceof ConstantExpression && $valueNode instanceof ConstantExpression) {
-                $attributes[$keyNode->getAttribute('value')] = $valueNode->getAttribute('value');
+                $key = $keyNode->getAttribute('value');
+                if (is_string($key)) {
+                    $attributes[$key] = $valueNode->getAttribute('value');
+                }
             }
         }
 

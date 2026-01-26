@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/src/Slot/SlotRegistryInterface.php
 
 declare(strict_types=1);
@@ -18,10 +19,15 @@ interface SlotRegistryInterface
 
     public function has(string $slotId): bool;
 
+    /**
+     * @throws \InvalidArgumentException When slot is not found.
+     */
     public function getSlot(string $slotId): DeferredSlot;
 
     /**
      * @return Future<string>
+     *
+     * @throws \InvalidArgumentException When slot is not found.
      */
     public function getFuture(string $slotId): Future;
 

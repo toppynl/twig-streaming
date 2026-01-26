@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/src/Profiler/StreamingTimelineEvent.php
 
 declare(strict_types=1);
@@ -28,7 +29,8 @@ final readonly class StreamingTimelineEvent
         }
         if (str_contains($this->name, '\\')) {
             $parts = explode('\\', $this->name);
-            return end($parts);
+            $shortName = end($parts);
+            return $shortName !== false ? $shortName : $this->name;
         }
         return $this->name;
     }

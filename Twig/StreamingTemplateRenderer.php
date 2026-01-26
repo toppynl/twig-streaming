@@ -7,11 +7,11 @@ namespace Toppy\TwigStreaming\Twig;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Toppy\AsyncViewModel\ViewModelManagerInterface;
+use Toppy\TwigStreaming\EarlyHints\EarlyHintsProviderInterface;
 use Toppy\TwigStreaming\Slot\DeferredSlot;
 use Toppy\TwigStreaming\Slot\SlotRegistryInterface;
 use Toppy\TwigStreaming\Slot\SlotRenderer;
-use Toppy\TwigStreaming\EarlyHints\EarlyHintsProviderInterface;
-use Toppy\AsyncViewModel\ViewModelManagerInterface;
 use Twig\Environment;
 use Twig\TemplateWrapper;
 
@@ -22,6 +22,7 @@ use Twig\TemplateWrapper;
  * as they become available. Supports defer(true) slots that stream
  * content fragments after the initial shell.
  */
+// @mago-ignore analysis:mixed-assignment - Twig Future::await() returns mixed; vendor limitation
 final class StreamingTemplateRenderer implements StreamingTemplateRendererInterface
 {
     public function __construct(
@@ -42,7 +43,12 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
      * @param array<string, mixed> $context Template variables
      * @param int $status HTTP status code
      * @param array<string, string> $headers Additional headers
+     *
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
+    #[\Override]
     public function render(
         string $templateName,
         array $context = [],
@@ -60,12 +66,13 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
         $innerTemplate = $template->unwrap();
 
         if (method_exists($innerTemplate, 'doPreload')) {
+            /** @var list<class-string<\Toppy\AsyncViewModel\AsyncViewModel<object>>> $viewModelClasses */
             $viewModelClasses = $innerTemplate->doPreload();
             $this->viewModelManager->preloadAll($viewModelClasses);
         }
 
         return new PendingResponse(
-            renderCallback: function (array $gates) use ($template, $context, $status, $headers) {
+            renderCallback: function (array $gates) use ($template, $context, $status, $headers): StreamedResponse {
                 return new StreamedResponse(
                     callbackOrChunks: function () use ($template, $context, $gates): void {
                         $this->streamTemplateWithTemplate($template, $context, $gates);
@@ -77,7 +84,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
                     ], $headers),
                 );
             },
-            earlyHintsCallback: fn () => $this->sendEarlyHints($hints),
+            earlyHintsCallback: fn() => $this->sendEarlyHints($hints),
         );
     }
 
@@ -85,7 +92,12 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
      * Direct render without PendingResponse (for simple cases).
      *
      * Note: Early Hints are sent immediately before returning the response.
+     *
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
+    #[\Override]
     public function renderDirect(
         string $templateName,
         array $context = [],
@@ -115,11 +127,8 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
      * @param array<string, mixed> $context
      * @param list<array{future: \Amp\Future<mixed>, gate: callable}> $gates
      */
-    private function streamTemplateWithTemplate(
-        TemplateWrapper $template,
-        array $context,
-        array $gates = [],
-    ): void {
+    private function streamTemplateWithTemplate(TemplateWrapper $template, array $context, array $gates = []): void
+    {
         // Early Hints are sent BEFORE this callback runs (in PendingResponse::getResponse)
         // ViewModels are already started via preloadAll() in render()
 
@@ -127,10 +136,11 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
         // This allows proper HTTP status codes on failure (e.g., 404)
         foreach ($gates as $gate) {
             $result = $gate['future']->await();
-            ($gate['gate'])($result);
+            $gate['gate']($result);
         }
 
         // Stream shell chunks as they become available
+        /** @var string $chunk */
         foreach ($template->stream($context) as $chunk) {
             echo $chunk;
 
@@ -151,6 +161,10 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
     /**
      * @param array<string, mixed> $context
      * @param list<array{future: \Amp\Future<mixed>, gate: callable}> $gates
+     *
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
     private function streamTemplate(string $templateName, array $context, array $gates = []): void
     {
@@ -161,6 +175,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
 
         // Start all futures in parallel (non-blocking)
         if (method_exists($innerTemplate, 'doPreload')) {
+            /** @var list<class-string<\Toppy\AsyncViewModel\AsyncViewModel<object>>> $viewModelClasses */
             $viewModelClasses = $innerTemplate->doPreload();
             $this->viewModelManager->preloadAll($viewModelClasses);
         }
@@ -169,10 +184,11 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
         // This allows proper HTTP status codes on failure (e.g., 404)
         foreach ($gates as $gate) {
             $result = $gate['future']->await();
-            ($gate['gate'])($result);
+            $gate['gate']($result);
         }
 
         // Stream shell chunks as they become available
+        /** @var string $chunk */
         foreach ($template->stream($context) as $chunk) {
             echo $chunk;
 
@@ -208,6 +224,10 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
      * Extract Early Hints from compiled template.
      *
      * @return list<array{rel: string, href: ?string, assetPath: ?string, attributes: array<string, mixed>}>
+     *
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
     private function extractEarlyHints(string $templateName): array
     {
@@ -215,6 +235,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
         $innerTemplate = $template->unwrap();
 
         if (method_exists($innerTemplate, 'doEarlyHints')) {
+            /** @var list<array{rel: string, href: ?string, assetPath: ?string, attributes: array<string, mixed>}> */
             return $innerTemplate->doEarlyHints();
         }
 
@@ -262,7 +283,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
             $parts = [\sprintf('<%s>', $hint['href']), \sprintf('rel=%s', $hint['rel'])];
 
             foreach ($hint['attributes'] as $key => $value) {
-                $parts[] = \sprintf('%s=%s', $key, $value);
+                $parts[] = \sprintf('%s=%s', $key, (string) $value);
             }
 
             $links[] = implode('; ', $parts);
@@ -275,6 +296,10 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
      * Collect and resolve all Early Hints from template + providers.
      *
      * @return list<array{rel: string, href: string, attributes: array<string, mixed>}>
+     *
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
     private function collectEarlyHints(string $templateName): array
     {
@@ -293,7 +318,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
             }
         }
 
-        if (empty($allHints)) {
+        if ($allHints === []) {
             return [];
         }
 
@@ -303,7 +328,12 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
         foreach ($resolvedHints as $hint) {
             $key = $hint['href'];
             if (!isset($uniqueHints[$key])) {
-                $uniqueHints[$key] = $hint;
+                // Strip assetPath (only needed for resolution, not for output)
+                $uniqueHints[$key] = [
+                    'rel' => $hint['rel'],
+                    'href' => $hint['href'],
+                    'attributes' => $hint['attributes'],
+                ];
             }
         }
 
@@ -320,7 +350,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
      */
     private function sendEarlyHints(array $hints): void
     {
-        if (empty($hints)) {
+        if ($hints === []) {
             return;
         }
 
@@ -336,7 +366,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
 
         // Send 103 Early Hints using PHP's native functions
         // This avoids Symfony's Response which adds default headers
-        header('Link: ' . $linkHeader, false);
+        header('Link: ' . $linkHeader, replace: false);
         headers_send(103);
 
         // Remove Link header to prevent PHP from copying it to the final 200 response
@@ -352,7 +382,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
 
         $pending = $this->slotRegistry->getPending();
 
-        if (empty($pending)) {
+        if ($pending === []) {
             return;
         }
 
@@ -380,6 +410,10 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
 
     private function renderFallbackFragment(DeferredSlot $slot, \Throwable $error): string
     {
+        if ($this->slotRenderer === null) {
+            return '';
+        }
+
         if ($slot->fallback === null) {
             // Silent fail - render empty content to clear skeleton
             return $this->slotRenderer->renderFragment($slot, '');

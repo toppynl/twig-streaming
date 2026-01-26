@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/tests/Unit/Slot/SlotRegistryTest.php
 
 declare(strict_types=1);
@@ -10,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Toppy\TwigStreaming\Slot\DeferredSlot;
 use Toppy\TwigStreaming\Slot\SlotRegistry;
 
+/** Tests for SlotRegistry */
 final class SlotRegistryTest extends TestCase
 {
     public function testRegisterAndGetSlot(): void
@@ -20,24 +22,24 @@ final class SlotRegistryTest extends TestCase
 
         $registry->register($slot, $future);
 
-        $this->assertTrue($registry->has('slot_1'));
-        $this->assertSame($slot, $registry->getSlot('slot_1'));
-        $this->assertSame($future, $registry->getFuture('slot_1'));
+        static::assertTrue($registry->has('slot_1'));
+        static::assertSame($slot, $registry->getSlot('slot_1'));
+        static::assertSame($future, $registry->getFuture('slot_1'));
     }
 
     public function testHasReturnsFalseForUnknownSlot(): void
     {
         $registry = new SlotRegistry();
 
-        $this->assertFalse($registry->has('unknown'));
+        static::assertFalse($registry->has('unknown'));
     }
 
     public function testGetSlotThrowsForUnknownSlot(): void
     {
         $registry = new SlotRegistry();
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Slot "unknown" not found');
+        static::expectException(\InvalidArgumentException::class);
+        static::expectExceptionMessage('Slot "unknown" not found');
 
         $registry->getSlot('unknown');
     }
@@ -46,8 +48,8 @@ final class SlotRegistryTest extends TestCase
     {
         $registry = new SlotRegistry();
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Slot "unknown" not found');
+        static::expectException(\InvalidArgumentException::class);
+        static::expectExceptionMessage('Slot "unknown" not found');
 
         $registry->getFuture('unknown');
     }
@@ -67,7 +69,7 @@ final class SlotRegistryTest extends TestCase
 
         $pending = $registry->getPending();
 
-        $this->assertCount(2, $pending);
+        static::assertCount(2, $pending);
     }
 
     public function testResetClearsRegistry(): void
@@ -76,9 +78,9 @@ final class SlotRegistryTest extends TestCase
         $slot = new DeferredSlot('slot_1', 'template.twig', 'skeleton.twig');
 
         $registry->register($slot, Future::complete(''));
-        $this->assertTrue($registry->has('slot_1'));
+        static::assertTrue($registry->has('slot_1'));
 
         $registry->reset();
-        $this->assertFalse($registry->has('slot_1'));
+        static::assertFalse($registry->has('slot_1'));
     }
 }

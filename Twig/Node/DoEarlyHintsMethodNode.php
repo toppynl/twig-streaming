@@ -29,6 +29,10 @@ final class DoEarlyHintsMethodNode extends Node
         parent::__construct();
     }
 
+    /**
+     * @throws \LogicException
+     */
+    #[\Override]
     public function compile(Compiler $compiler): void
     {
         $compiler
@@ -36,7 +40,9 @@ final class DoEarlyHintsMethodNode extends Node
             ->write("/**\n")
             ->write(" * Returns Early Hints discovered at compile-time.\n")
             ->write(" *\n")
-            ->write(" * @return list<array{rel: string, href: ?string, assetPath: ?string, attributes: array<string, mixed>}>\n")
+            ->write(
+                " * @return list<array{rel: string, href: ?string, assetPath: ?string, attributes: array<string, mixed>}>\n",
+            )
             ->write(" */\n")
             ->write("public function doEarlyHints(): array\n")
             ->write("{\n")

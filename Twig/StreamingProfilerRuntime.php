@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/src/Twig/StreamingProfilerRuntime.php
 
 declare(strict_types=1);

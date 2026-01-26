@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/tests/Unit/Slot/DeferredSlotTest.php
 
 declare(strict_types=1);
@@ -9,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Toppy\AsyncViewModel\Context\RequestContext;
 use Toppy\TwigStreaming\Slot\DeferredSlot;
 
+/** Tests for DeferredSlot */
 final class DeferredSlotTest extends TestCase
 {
     public function testCreateWithRequiredFields(): void
@@ -19,11 +21,11 @@ final class DeferredSlotTest extends TestCase
             skeleton: 'skeletons/reviews.html.twig',
         );
 
-        $this->assertSame('slot_abc123', $slot->id);
-        $this->assertSame('components/reviews.html.twig', $slot->template);
-        $this->assertSame('skeletons/reviews.html.twig', $slot->skeleton);
-        $this->assertNull($slot->fallback);
-        $this->assertFalse($slot->isInlineFallback);
+        static::assertSame('slot_abc123', $slot->id);
+        static::assertSame('components/reviews.html.twig', $slot->template);
+        static::assertSame('skeletons/reviews.html.twig', $slot->skeleton);
+        static::assertNull($slot->fallback);
+        static::assertFalse($slot->isInlineFallback);
     }
 
     public function testCreateWithTemplateFallback(): void
@@ -36,8 +38,8 @@ final class DeferredSlotTest extends TestCase
             isInlineFallback: false,
         );
 
-        $this->assertSame('errors/reviews.html.twig', $slot->fallback);
-        $this->assertFalse($slot->isInlineFallback);
+        static::assertSame('errors/reviews.html.twig', $slot->fallback);
+        static::assertFalse($slot->isInlineFallback);
     }
 
     public function testCreateWithInlineStringFallback(): void
@@ -50,8 +52,8 @@ final class DeferredSlotTest extends TestCase
             isInlineFallback: true,
         );
 
-        $this->assertSame('Unable to load reviews', $slot->fallback);
-        $this->assertTrue($slot->isInlineFallback);
+        static::assertSame('Unable to load reviews', $slot->fallback);
+        static::assertTrue($slot->isInlineFallback);
     }
 
     public function testGenerateIdFromTemplateAndContext(): void
@@ -64,8 +66,8 @@ final class DeferredSlotTest extends TestCase
         $id2 = DeferredSlot::generateId('components/reviews.html.twig', $ctx2);
         $id3 = DeferredSlot::generateId('components/reviews.html.twig', $ctx3);
 
-        $this->assertStringStartsWith('slot_', $id1);
-        $this->assertNotSame($id1, $id2); // Different context = different ID
-        $this->assertSame($id1, $id3);    // Same template + context = same ID
+        static::assertStringStartsWith('slot_', $id1);
+        static::assertNotSame($id1, $id2); // Different context = different ID
+        static::assertSame($id1, $id3); // Same template + context = same ID
     }
 }

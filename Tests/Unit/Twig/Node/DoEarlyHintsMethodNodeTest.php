@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Toppy\TwigStreaming\Tests\Unit\Twig\Node;
 
 use PHPUnit\Framework\TestCase;
+use Toppy\TwigStreaming\Twig\Node\DoEarlyHintsMethodNode;
 use Twig\Compiler;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
-use Toppy\TwigStreaming\Twig\Node\DoEarlyHintsMethodNode;
 
+/**
+ * @mago-expect analysis:possibly-invalid-argument
+ */
 final class DoEarlyHintsMethodNodeTest extends TestCase
 {
     public function testCompilesMethodWithHints(): void
@@ -28,11 +31,11 @@ final class DoEarlyHintsMethodNodeTest extends TestCase
         $node->compile($compiler);
         $source = $compiler->getSource();
 
-        $this->assertStringContainsString('public function doEarlyHints(): array', $source);
-        $this->assertStringContainsString('/css/app.css', $source);
-        $this->assertStringContainsString('preconnect', $source);
-        $this->assertStringContainsString('fonts.googleapis.com', $source);
-        $this->assertStringContainsString('doGetParent', $source);
+        static::assertStringContainsString('public function doEarlyHints(): array', $source);
+        static::assertStringContainsString('/css/app.css', $source);
+        static::assertStringContainsString('preconnect', $source);
+        static::assertStringContainsString('fonts.googleapis.com', $source);
+        static::assertStringContainsString('doGetParent', $source);
     }
 
     public function testCompilesEmptyHints(): void
@@ -46,6 +49,6 @@ final class DoEarlyHintsMethodNodeTest extends TestCase
         $node->compile($compiler);
         $source = $compiler->getSource();
 
-        $this->assertStringContainsString('$hints = []', $source);
+        static::assertStringContainsString('$hints = []', $source);
     }
 }

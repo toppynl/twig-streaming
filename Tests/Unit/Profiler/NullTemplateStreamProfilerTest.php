@@ -8,12 +8,13 @@ use PHPUnit\Framework\TestCase;
 use Toppy\TwigStreaming\Profiler\NullTemplateStreamProfiler;
 use Toppy\TwigStreaming\Profiler\TemplateStreamProfilerInterface;
 
+/** Tests for NullTemplateStreamProfiler */
 final class NullTemplateStreamProfilerTest extends TestCase
 {
     public function testImplementsInterface(): void
     {
         $profiler = new NullTemplateStreamProfiler();
-        $this->assertInstanceOf(TemplateStreamProfilerInterface::class, $profiler);
+        static::assertInstanceOf(TemplateStreamProfilerInterface::class, $profiler);
     }
 
     public function testGetEventsReturnsEmptyArray(): void
@@ -22,6 +23,6 @@ final class NullTemplateStreamProfilerTest extends TestCase
         $profiler->enterTemplate('test.html.twig');
         $profiler->leaveTemplate('test.html.twig');
 
-        $this->assertSame([], $profiler->getEvents());
+        static::assertSame([], $profiler->getEvents());
     }
 }

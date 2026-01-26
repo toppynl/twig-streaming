@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/src/Profiler/TemplateStreamProfilerInterface.php
 
 declare(strict_types=1);

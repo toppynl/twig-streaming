@@ -1,4 +1,5 @@
 <?php
+
 // packages/twig-streaming/tests/Unit/Twig/NodeVisitor/StreamingProfilerNodeVisitorTest.php
 
 declare(strict_types=1);
@@ -10,6 +11,7 @@ use Toppy\TwigStreaming\Twig\NodeVisitor\StreamingProfilerNodeVisitor;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
+/** Tests for StreamingProfilerNodeVisitor */
 final class StreamingProfilerNodeVisitorTest extends TestCase
 {
     public function testInjectsProfilerCallsIntoTemplate(): void
@@ -20,13 +22,11 @@ final class StreamingProfilerNodeVisitorTest extends TestCase
         $twig = new Environment($loader);
         $twig->addNodeVisitor(new StreamingProfilerNodeVisitor());
 
-        $source = $twig->compileSource(
-            $twig->getLoader()->getSourceContext('test.html.twig')
-        );
+        $source = $twig->compileSource($twig->getLoader()->getSourceContext('test.html.twig'));
 
-        $this->assertStringContainsString('enterTemplate', $source);
-        $this->assertStringContainsString('leaveTemplate', $source);
-        $this->assertStringContainsString('test.html.twig', $source);
+        static::assertStringContainsString('enterTemplate', $source);
+        static::assertStringContainsString('leaveTemplate', $source);
+        static::assertStringContainsString('test.html.twig', $source);
     }
 
     public function testInjectsBlockProfilerCalls(): void
@@ -37,12 +37,10 @@ final class StreamingProfilerNodeVisitorTest extends TestCase
         $twig = new Environment($loader);
         $twig->addNodeVisitor(new StreamingProfilerNodeVisitor());
 
-        $source = $twig->compileSource(
-            $twig->getLoader()->getSourceContext('test.html.twig')
-        );
+        $source = $twig->compileSource($twig->getLoader()->getSourceContext('test.html.twig'));
 
-        $this->assertStringContainsString('enterBlock', $source);
-        $this->assertStringContainsString('leaveBlock', $source);
-        $this->assertStringContainsString('content', $source);
+        static::assertStringContainsString('enterBlock', $source);
+        static::assertStringContainsString('leaveBlock', $source);
+        static::assertStringContainsString('content', $source);
     }
 }
