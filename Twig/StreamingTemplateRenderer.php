@@ -376,11 +376,13 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
 
     private function streamSlotFragments(): void
     {
-        if ($this->slotRegistry === null || $this->slotRenderer === null) {
+        $slotRegistry = $this->slotRegistry;
+        $slotRenderer = $this->slotRenderer;
+        if ($slotRegistry === null || $slotRenderer === null) {
             return;
         }
 
-        $pending = $this->slotRegistry->getPending();
+        $pending = $slotRegistry->getPending();
 
         if ($pending === []) {
             return;
@@ -390,7 +392,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
         foreach ($pending as ['slot' => $slot, 'future' => $future]) {
             try {
                 $content = $future->await();
-                $fragment = $this->slotRenderer->renderFragment($slot, $content);
+                $fragment = $slotRenderer->renderFragment($slot, $content);
             } catch (\Throwable $e) {
                 // Render fallback on error
                 $fragment = $this->renderFallbackFragment($slot, $e);
@@ -405,7 +407,7 @@ final class StreamingTemplateRenderer implements StreamingTemplateRendererInterf
         }
 
         // Clear registry for next request (worker mode)
-        $this->slotRegistry->reset();
+        $slotRegistry->reset();
     }
 
     private function renderFallbackFragment(DeferredSlot $slot, \Throwable $error): string
