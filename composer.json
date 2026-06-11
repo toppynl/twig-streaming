@@ -15,7 +15,7 @@
   },
   "require": {
     "php": ">=8.4",
-    "toppy/async-view-model": "*@dev",
+    "toppy/async-view-model": "^0.7",
     "twig/twig": "^3.23",
     "amphp/amp": "^3.0",
     "symfony/http-foundation": "^6.4 || ^7.0 || ^8.0",
@@ -25,10 +25,5 @@
     "phpunit/phpunit": "^12.5",
     "symfony/asset": "^6.4 || ^7.0 || ^8.0",
     "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0"
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-main": "0.x-dev"
-    }
   }
 }
