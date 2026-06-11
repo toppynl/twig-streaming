@@ -20,6 +20,12 @@ final class SlotRegistry implements SlotRegistryInterface, ResetInterface
     #[\Override]
     public function register(DeferredSlot $slot, Future $contentFuture): void
     {
+        // ignore() so a rejected slot future dropped without being awaited
+        // (stream aborted, or reset() between requests in worker mode) never
+        // surfaces as an UnhandledFutureError in a later request. The slot
+        // streamer still observes rejections by awaiting the future.
+        $contentFuture->ignore();
+
         $this->slots[$slot->id] = $slot;
         $this->futures[$slot->id] = $contentFuture;
     }

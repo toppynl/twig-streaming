@@ -14,6 +14,44 @@ use Toppy\TwigStreaming\Slot\SlotRegistry;
 /** Tests for SlotRegistry */
 final class SlotRegistryTest extends TestCase
 {
+    public function testResetDropsRejectedFuturesWithoutUnhandledErrors(): void
+    {
+        // In worker mode the registry is kernel.reset between requests. A slot
+        // future that rejected and was never awaited (e.g. the stream aborted
+        // before the slot flushed) must not surface as an UnhandledFutureError
+        // in a later request when reset() drops the last reference.
+        $caught = [];
+        $previousHandler = \Revolt\EventLoop::getErrorHandler();
+        \Revolt\EventLoop::setErrorHandler(static function (\Throwable $e) use (&$caught): void {
+            $caught[] = $e;
+        });
+
+        try {
+            $registry = new SlotRegistry();
+            $registry->register(
+                new DeferredSlot('slot_fail', 'template.twig', 'skeleton.twig'),
+                \Amp\async(static function (): string {
+                    throw new \RuntimeException('slot resolution failed');
+                }),
+            );
+
+            // Let the future reject.
+            \Amp\delay(0.05);
+
+            // End of request: kernel.reset drops the future.
+            $registry->reset();
+            unset($registry);
+            gc_collect_cycles();
+
+            // Next request ticks the loop.
+            \Amp\delay(0.01);
+        } finally {
+            \Revolt\EventLoop::setErrorHandler($previousHandler);
+        }
+
+        static::assertSame([], $caught, 'A dropped rejected slot future must not surface as an UnhandledFutureError');
+    }
+
     public function testRegisterAndGetSlot(): void
     {
         $registry = new SlotRegistry();
